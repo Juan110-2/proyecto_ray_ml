@@ -1,0 +1,5 @@
+FROM python:3.10
+WORKDIR /app
+COPY ray_backend/ .
+RUN pip install ray[serve]
+CMD ["python", "serve_api.py"]
