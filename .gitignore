@@ -1,0 +1,41 @@
+# Entornos virtuales
+venv/
+.env/
+.venv/
+
+# Archivos temporales de Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.log
+
+# Archivos de configuración
+*.env
+.env.*
+
+# Archivos de Jupyter o IPython
+.ipynb_checkpoints
+
+# Docker
+*.db
+*.pid
+*.sock
+*.tar
+*.bak
+*.swp
+
+# Archivos de despliegue
+*.pem
+
+# Editor
+.vscode/
+.idea/
+
+# Archivos generados
+*.pickle
+*.pkl
+*.h5
+*.joblib
+.DS_Store
+Thumbs.db
