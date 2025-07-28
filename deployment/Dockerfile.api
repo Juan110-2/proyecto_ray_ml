@@ -1,6 +1,0 @@
-FROM python:3.10
-WORKDIR /app
-COPY api_flask/ .
-COPY ray_backend/ ./ray_backend
-RUN pip install flask ray
-CMD ["python", "app.py"]
