@@ -1,6 +1,0 @@
-import_path: app.main:entrypoint
-
-applications:
-  - name: ml_app
-    route_prefix: /
-    import_path: app.main:entrypoint

@@ -1,6 +1,0 @@
-ray[serve]
-fastapi
-uvicorn
-scikit-learn
-pandas
-numpy
