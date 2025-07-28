@@ -339,15 +339,15 @@ export default function ChartVisualization({
               />
               <Line
                 type="monotone"
-                dataKey="strategyReturn"
-                stroke="hsl(var(--chart-1))"
+                dataKey="buyHoldReturn"
+                stroke="hsl(var(--chart-2))"
                 strokeWidth={2}
                 dot={false}
               />
               <Line
                 type="monotone"
-                dataKey="buyHoldReturn"
-                stroke="hsl(var(--chart-2))"
+                dataKey="strategyReturn"
+                stroke="hsl(var(--chart-1))"
                 strokeWidth={2}
                 dot={false}
               />
