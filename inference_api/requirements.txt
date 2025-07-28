@@ -1,0 +1,12 @@
+numpy==1.26.4
+pandas
+yfinance==0.2.62
+requests
+fastapi[standard]
+ray[serve]
+pydantic
+boto3
+supabase
+storage3
+matplotlib
+python-dotenv

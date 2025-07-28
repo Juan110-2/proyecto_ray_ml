@@ -1,0 +1,14 @@
+services:
+    ray_server_inference:
+      build: ./
+      container_name: inference_serve
+      shm_size: "2gb"
+      environment:
+        - RAY_memory_usage_threshold=0.95
+        - SUPABASE_URL=${SUPABASE_URL}
+        - SUPABASE_KEY=${SUPABASE_KEY}
+      ports:
+        - "8001:8001"
+      restart: always
+    
+    
