@@ -7,7 +7,7 @@ import { Loader2, BarChart3, Download, TrendingUp, Calendar } from "lucide-react
 import { Badge } from "@/components/ui/badge"
 import axios from "axios"
 import { XAxis, YAxis, CartesianGrid, Legend, LineChart, Line } from "recharts"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart" // Importar componentes de shadcn/ui/chart
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 
 interface ChartVisualizationProps {
   plotUrl: string
@@ -29,94 +29,81 @@ export default function ChartVisualization({
   const [loadingState, setLoadingState] = useState("")
   const [chartJsonData, setChartJsonData] = useState([])
   const [realData, setRealData] = useState([])
+  const [ticker, setTicker] = useState("") // Para almacenar el ticker dinámico
 
-  // Función para parsear CSV
-  const parseCSV = (csvText: string) => {
-    const lines = csvText.trim().split("\n")
-    const headers = lines[0].split(",")
-
-    return lines.slice(1).map((line) => {
-      const values = line.split(",")
-      const obj: any = {}
-
-      headers.forEach((header, index) => {
-        const cleanHeader = header.replace(/"/g, "").trim()
-        const value = values[index]?.replace(/"/g, "").trim()
-
-        if (cleanHeader === "Date") {
-          obj[cleanHeader] = value
-        } else {
-          obj[cleanHeader] = Number.parseFloat(value) || 0
-        }
-      })
-
-      return obj
-    })
+  // Función para detectar el ticker y la columna de Buy&Hold
+  const detectTickerAndColumns = (data: any[]) => {
+    if (data.length === 0) return { ticker: "", buyHoldColumn: "" }
+    
+    const firstItem = data[0]
+    const keys = Object.keys(firstItem)
+    
+    // Buscar la columna que contiene "Buy&Hold"
+    const buyHoldColumn = keys.find(key => key.includes("Buy&Hold")) || ""
+    
+    // Extraer el ticker del nombre de la columna (ej: "ABT Buy&Hold" -> "ABT")
+    const tickerMatch = buyHoldColumn.match(/^(.+?)\s+Buy&Hold$/)
+    const detectedTicker = tickerMatch ? tickerMatch[1] : "STOCK"
+    
+    return { ticker: detectedTicker, buyHoldColumn }
   }
 
   // Función para obtener datos reales del CSV
   const fetchRealData = async () => {
-    setIsLoading(true)
-    setLoadingState("Obteniendo datos reales del CSV...")
-
+    setIsLoading(true);
+    setLoadingState("Obteniendo datos reales del servidor...");
+  
     try {
-      // const response = await fetch(
-      //   "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/inference_GOOGL_e271e3cf-c54f-42d7-9f93-5a7305b93750%20%281%29-Dvr0AnTSc8qGgVDXHjmEoWQBN9SucU.csv",
-      // )
-      const response = await fetch("http://localhost:8000/plot/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ url: plotUrl }), // Aquí solo pasa el nombre
-      })
+      const response = await axios.post("http://localhost:8000/plot/", {
+        url: plotUrl,
+      });
+  
+      const parsedData = response.data;
+      console.log("Datos recibidos:", parsedData.slice(0, 3));
       
-      
-      const csvText = await response.text()
-
-      console.log("CSV obtenido:", csvText.substring(0, 200) + "...")
-
-      const parsedData = parseCSV(csvText)
-      console.log("Datos parseados:", parsedData.slice(0, 3))
-
-      setRealData(parsedData)
-      setLoadingState("¡Datos reales cargados exitosamente!")
-      onChartUpdate("", true)
+      // Detectar ticker y columnas
+      const { ticker: detectedTicker } = detectTickerAndColumns(parsedData);
+      setTicker(detectedTicker);
+  
+      setRealData(parsedData);
+      setLoadingState("¡Datos reales cargados exitosamente!");
+      onChartUpdate("", true);
     } catch (error) {
-      console.error("Error al obtener CSV:", error)
-      setLoadingState("Error al obtener datos del CSV")
+      console.error("Error al obtener datos:", error);
+      setLoadingState("Error al obtener datos del servidor");
     } finally {
       setTimeout(() => {
-        setIsLoading(false)
-        setLoadingState("")
-      }, 2000)
+        setIsLoading(false);
+        setLoadingState("");
+      }, 2000);
     }
-  }
+  };
 
-  // Función para calcular retornos acumulativos (como en Python: np.exp(np.log1p(df).cumsum()) - 1)
-  const calculateCumulativeReturns = (data) => {
-    let strategySum = 0
-    let buyHoldSum = 0
-
+  // Función para procesar datos (solo formatear, NO calcular)
+  const processData = (data) => {
+    const { buyHoldColumn } = detectTickerAndColumns(data)
+    
     return data.map((item, index) => {
-      // Calcular log1p y suma acumulativa
-      const strategyReturn = item["Strategy Return"] || 0
-      const buyHoldReturn = item["GOOGL Buy&Hold"] || 0
+      // Los datos YA VIENEN como retornos acumulativos
+      // Solo convertir a porcentaje para display
+      const strategyCumulative = (item["Strategy Return"] || 0) * 100
+      const buyHoldCumulative = (item[buyHoldColumn] || 0) * 100
 
-      strategySum += Math.log1p(strategyReturn)
-      buyHoldSum += Math.log1p(buyHoldReturn)
-
-      // Calcular retorno acumulativo: exp(sum) - 1
-      const strategyCumulative = Math.exp(strategySum) - 1
-      const buyHoldCumulative = Math.exp(buyHoldSum) - 1
+      // Formatear la fecha correctamente
+      const dateObj = new Date(item.date)
+      const formattedDate = dateObj.toLocaleDateString("en-US", { 
+        month: "2-digit",
+        day: "2-digit",
+        year: "2-digit"
+      })
 
       return {
-        date: new Date(item.Date).toLocaleDateString("en-US", { year: "2-digit", month: "2-digit" }), // Formato YY-MM
-        fullDate: item.Date,
-        strategyReturn: strategyCumulative, // Mantener como decimal para cálculo
-        buyHoldReturn: buyHoldCumulative, // Mantener como decimal para cálculo
-        strategyDaily: strategyReturn,
-        buyHoldDaily: buyHoldReturn,
+        date: formattedDate,
+        fullDate: item.date,
+        strategyReturn: strategyCumulative,
+        buyHoldReturn: buyHoldCumulative,
+        rawStrategyReturn: item["Strategy Return"], // Para métricas si las necesitas
+        rawBuyHoldReturn: item[buyHoldColumn]
       }
     })
   }
@@ -140,8 +127,12 @@ export default function ChartVisualization({
         });
         
         const rawData = jsonResponse.data
-
         console.log("Datos de API recibidos:", rawData)
+        
+        // Detectar ticker y columnas
+        const { ticker: detectedTicker } = detectTickerAndColumns(rawData);
+        setTicker(detectedTicker);
+        
         setChartJsonData(rawData)
         setLoadingState("¡Datos de API cargados exitosamente!")
         onChartUpdate("", true)
@@ -161,41 +152,39 @@ export default function ChartVisualization({
 
   // Usar datos reales del CSV o datos de la API
   const dataToShow = chartJsonData.length > 0 ? chartJsonData : realData
-  const formattedData = dataToShow.length > 0 ? calculateCumulativeReturns(dataToShow) : []
+  const formattedData = dataToShow.length > 0 ? processData(dataToShow) : []
 
   // Calcular métricas
-  const finalStrategyReturn =
-    formattedData.length > 0 ? (formattedData[formattedData.length - 1].strategyReturn * 100).toFixed(2) : "0"
-  const finalBuyHoldReturn =
-    formattedData.length > 0 ? (formattedData[formattedData.length - 1].buyHoldReturn * 100).toFixed(2) : "0"
+  const finalStrategyReturn = formattedData.length > 0 ? formattedData[formattedData.length - 1].strategyReturn.toFixed(2) : "0"
+  const finalBuyHoldReturn = formattedData.length > 0 ? formattedData[formattedData.length - 1].buyHoldReturn.toFixed(2) : "0"
   const totalDays = formattedData.length
 
-  // Calcular métricas adicionales
+  // Debug: Mostrar algunos valores para verificar
+  if (formattedData.length > 0) {
+    console.log("Primeros 3 valores formateados:", formattedData.slice(0, 3))
+    console.log("Último valor Strategy:", finalStrategyReturn)
+    console.log("Último valor Buy&Hold:", finalBuyHoldReturn)
+  }
+
+  // Calcular métricas básicas (simplificadas)
   const calculateMetrics = (data) => {
-    if (data.length === 0) return { volatility: "0", maxDrawdown: "0", sharpeRatio: "0" }
+    if (data.length === 0) return { volatility: "N/A", maxDrawdown: "N/A", sharpeRatio: "N/A" }
 
-    const returns = data.map((d) => d.strategyDaily)
-    const mean = returns.reduce((sum, val) => sum + val, 0) / returns.length
-    const variance = returns.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / returns.length
-    const volatility = Math.sqrt(variance * 252).toFixed(2) // Anualizada
-
-    // Calcular máximo drawdown
+    // Calcular máximo drawdown simple
     let maxDrawdown = 0
-    let peak = 0
+    let peak = -Infinity
+    
     data.forEach((d) => {
       const value = d.rawStrategyReturn
       if (value > peak) peak = value
-      const drawdown = (peak - value) / peak
+      const drawdown = peak > value ? peak - value : 0
       if (drawdown > maxDrawdown) maxDrawdown = drawdown
     })
 
-    // Sharpe ratio aproximado (asumiendo risk-free rate = 0)
-    const sharpeRatio = volatility > 0 ? ((mean * Math.sqrt(252)) / Number.parseFloat(volatility)).toFixed(2) : "0"
-
     return {
-      volatility,
+      volatility: "N/A", // No calculamos sin retornos diarios
       maxDrawdown: (maxDrawdown * 100).toFixed(2),
-      sharpeRatio,
+      sharpeRatio: "N/A", // No calculamos sin retornos diarios
     }
   }
 
@@ -207,24 +196,22 @@ export default function ChartVisualization({
 
   // Configuración para ChartContainer
   const chartConfig = {
-    "Strategy Return": {
+    strategyReturn: {
       label: "Strategy Return",
-      color: "hsl(var(--chart-1))", // Usar color de shadcn/ui (naranja/rojo)
+      color: "hsl(var(--chart-1))",
     },
-    "GOOGL Buy&Hold": {
-      label: "GOOGL Buy&Hold",
-      color: "hsl(var(--chart-2))", // Usar color de shadcn/ui (azul)
+    buyHoldReturn: {
+      label: `${ticker} Buy&Hold`,
+      color: "hsl(var(--chart-2))",
     },
   }
 
   return (
     <Card className="bg-white text-slate-900 border-slate-200">
-      {" "}
-      {/* Fondo blanco */}
       <CardHeader>
         <CardTitle className="text-slate-900 flex items-center gap-2">
           <BarChart3 className="h-5 w-5 text-green-600" />
-          Análisis de Trading GOOGL - Datos Reales
+          Análisis de Trading {ticker} - Datos Reales
         </CardTitle>
         <CardDescription className="text-slate-600">
           Comparación de estrategias con datos reales de inferencia ({startDate} - {endDate})
@@ -250,7 +237,7 @@ export default function ChartVisualization({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
             <div>
               <span className="text-slate-600">Ticker:</span>
-              <span className="text-slate-900 ml-2 font-bold">GOOGL</span>
+              <span className="text-slate-900 ml-2 font-bold">{ticker}</span>
             </div>
             <div>
               <span className="text-slate-600">Período:</span>
@@ -284,7 +271,7 @@ export default function ChartVisualization({
             <div className="text-slate-600 text-sm">Buy & Hold</div>
           </div>
           <div className="bg-slate-100 p-4 rounded-lg text-center">
-            <div className="text-purple-600 font-bold text-xl">{metrics.volatility}%</div>
+            <div className="text-purple-600 font-bold text-xl">{metrics.volatility}</div>
             <div className="text-slate-600 text-sm">Volatilidad</div>
           </div>
           <div className="bg-slate-100 p-4 rounded-lg text-center">
@@ -306,10 +293,10 @@ export default function ChartVisualization({
 
           <ChartContainer config={chartConfig} className="min-h-[400px] w-full">
             <LineChart data={formattedData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" /> {/* Color de grid más claro */}
+              <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" />
               <XAxis
                 dataKey="date"
-                stroke="#616161" // Color de texto más oscuro
+                stroke="#616161"
                 fontSize={12}
                 angle={-45}
                 textAnchor="end"
@@ -317,11 +304,12 @@ export default function ChartVisualization({
                 interval={Math.floor(formattedData.length / 10)}
               />
               <YAxis
-                stroke="#616161" // Color de texto más oscuro
+                stroke="#616161"
                 fontSize={12}
-                tickFormatter={(value) => `${value}%`} // Formato de porcentaje
+                tickFormatter={(value) => `${value.toFixed(1)}%`}
+                domain={['dataMin', 'dataMax']}
                 label={{
-                  value: "Return",
+                  value: "Cumulative Return (%)",
                   angle: -90,
                   position: "insideLeft",
                   style: { textAnchor: "middle", fill: "#616161" },
@@ -331,10 +319,10 @@ export default function ChartVisualization({
                 cursor={false}
                 content={
                   <ChartTooltipContent
-                    className="bg-slate-900 text-white border-slate-700" // Fondo oscuro para tooltip
+                    className="bg-slate-900 text-white border-slate-700"
                     formatter={(value, name) => [
-                      `${Number.parseFloat(value).toFixed(2)}%`,
-                      name === "strategyReturn" ? "Strategy Return" : "GOOGL Buy&Hold",
+                      `${parseFloat(value).toFixed(2)}%`,
+                      name === "strategyReturn" ? "Strategy Return" : `${ticker} Buy&Hold`,
                     ]}
                     labelFormatter={(label, payload) => {
                       if (payload && payload[0]) {
@@ -346,22 +334,22 @@ export default function ChartVisualization({
                 }
               />
               <Legend
-                wrapperStyle={{ color: "#616161", paddingTop: "20px" }} // Color de texto más oscuro
-                formatter={(value) => (value === "strategyReturn" ? "Strategy Return" : "GOOGL Buy&Hold")}
+                wrapperStyle={{ color: "#616161", paddingTop: "20px" }}
+                formatter={(value) => (value === "strategyReturn" ? "Strategy Return" : `${ticker} Buy&Hold`)}
               />
               <Line
                 type="monotone"
                 dataKey="strategyReturn"
-                stroke="hsl(var(--chart-1))" // Color de shadcn/ui
+                stroke="hsl(var(--chart-1))"
                 strokeWidth={2}
-                dot={false} // Sin puntos para coincidir con la imagen
+                dot={false}
               />
               <Line
                 type="monotone"
                 dataKey="buyHoldReturn"
-                stroke="hsl(var(--chart-2))" // Color de shadcn/ui
+                stroke="hsl(var(--chart-2))"
                 strokeWidth={2}
-                dot={false} // Sin puntos para coincidir con la imagen
+                dot={false}
               />
             </LineChart>
           </ChartContainer>
@@ -378,7 +366,7 @@ export default function ChartVisualization({
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-600">Volatilidad Anual:</span>
-                <span className="text-slate-600">{metrics.volatility}%</span>
+                <span className="text-slate-600">{metrics.volatility}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-600">Sharpe Ratio:</span>
@@ -392,7 +380,7 @@ export default function ChartVisualization({
           </div>
 
           <div className="bg-slate-100 p-4 rounded-lg">
-            <h4 className="text-blue-600 font-medium mb-3 flex items-center gap-2">📈 GOOGL Buy & Hold</h4>
+            <h4 className="text-blue-600 font-medium mb-3 flex items-center gap-2">📈 {ticker} Buy & Hold</h4>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-slate-600">Retorno Total:</span>
@@ -402,12 +390,12 @@ export default function ChartVisualization({
                 <span className="text-slate-600">Diferencia vs IA:</span>
                 <span
                   className={`font-bold ${
-                    Number.parseFloat(finalStrategyReturn) > Number.parseFloat(finalBuyHoldReturn)
+                    parseFloat(finalStrategyReturn) > parseFloat(finalBuyHoldReturn)
                       ? "text-red-600"
                       : "text-green-600"
                   }`}
                 >
-                  {(Number.parseFloat(finalBuyHoldReturn) - Number.parseFloat(finalStrategyReturn)).toFixed(3)}%
+                  {(parseFloat(finalBuyHoldReturn) - parseFloat(finalStrategyReturn)).toFixed(2)}%
                 </span>
               </div>
               <div className="flex justify-between">
@@ -418,14 +406,14 @@ export default function ChartVisualization({
                 <span className="text-slate-600">Ganador:</span>
                 <span
                   className={`font-bold ${
-                    Number.parseFloat(finalStrategyReturn) > Number.parseFloat(finalBuyHoldReturn)
+                    parseFloat(finalStrategyReturn) > parseFloat(finalBuyHoldReturn)
                       ? "text-green-600"
                       : "text-blue-600"
                   }`}
                 >
-                  {Number.parseFloat(finalStrategyReturn) > Number.parseFloat(finalBuyHoldReturn)
+                  {parseFloat(finalStrategyReturn) > parseFloat(finalBuyHoldReturn)
                     ? "🚀 Estrategia IA"
-                    : "📈 Buy & Hold"}
+                    : `📈 ${ticker} Buy & Hold`}
                 </span>
               </div>
             </div>
@@ -441,7 +429,7 @@ export default function ChartVisualization({
               const url = URL.createObjectURL(dataBlob)
               const link = document.createElement("a")
               link.href = url
-              link.download = "googl-trading-analysis.json"
+              link.download = `${ticker.toLowerCase()}-trading-analysis.json`
               link.click()
             }}
             className="bg-purple-600 hover:bg-purple-700 text-white"
@@ -463,7 +451,7 @@ export default function ChartVisualization({
               const url = URL.createObjectURL(dataBlob)
               const link = document.createElement("a")
               link.href = url
-              link.download = "googl-trading-analysis.csv"
+              link.download = `${ticker.toLowerCase()}-trading-analysis.csv`
               link.click()
             }}
             className="bg-green-600 hover:bg-green-700 text-white"
