@@ -60,9 +60,18 @@ export default function ChartVisualization({
     setLoadingState("Obteniendo datos reales del CSV...")
 
     try {
-      const response = await fetch(
-        "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/inference_GOOGL_e271e3cf-c54f-42d7-9f93-5a7305b93750%20%281%29-Dvr0AnTSc8qGgVDXHjmEoWQBN9SucU.csv",
-      )
+      // const response = await fetch(
+      //   "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/inference_GOOGL_e271e3cf-c54f-42d7-9f93-5a7305b93750%20%281%29-Dvr0AnTSc8qGgVDXHjmEoWQBN9SucU.csv",
+      // )
+      const response = await fetch("http://localhost:8000/plot/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ url: plotUrl }), // Aquí solo pasa el nombre
+      })
+      
+      
       const csvText = await response.text()
 
       console.log("CSV obtenido:", csvText.substring(0, 200) + "...")
@@ -126,7 +135,10 @@ export default function ChartVisualization({
       setLoadingState("Obteniendo datos de la API...")
 
       try {
-        const jsonResponse = await axios.get(plotUrl)
+        const jsonResponse = await axios.post("http://localhost:8000/plot/", {
+          url: plotUrl,
+        });
+        
         const rawData = jsonResponse.data
 
         console.log("Datos de API recibidos:", rawData)
