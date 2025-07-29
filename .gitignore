@@ -181,5 +181,4 @@ certificates/
 .yarn/install-state.gz
 .pnp.*
 
-# Ignorar entornos virtuales
-venv311/
+/venv311
