@@ -134,7 +134,6 @@ Thumbs.db
 
 # Trading/Financial data (potentially sensitive)
 *.csv
-*.json
 data/
 historical_data/
 market_data/
