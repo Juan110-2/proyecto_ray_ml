@@ -12,23 +12,20 @@ class PortfolioService:
     
     def get_portfolio_returns_to_visualize(self, item: Item_t) -> dict:
         """Procesa los datos del portfolio y los almacena para visualización."""
-        # Descargar datos del índice
+
         portfolio_df = self.storage_service.download_data(item.index)
         
-        # Descargar datos del ticker
         data_ret = self.data_service.download_ticker_data(
             item.ticker, 
             item.start_date, 
             item.end_date
         )
         
-        # Combinar datos
         portfolio_df = portfolio_df.merge(
             data_ret,
             left_index=True,
             right_index=True
         )
         
-        # Almacenar resultado
         response = self.storage_service.store_portfolio(portfolio_df, item.ticker)
         return response

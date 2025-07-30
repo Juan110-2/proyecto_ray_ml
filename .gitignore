@@ -138,7 +138,6 @@ Thumbs.db
 
 # Trading/Financial data (potentially sensitive)
 *.csv
-*.json
 data/
 historical_data/
 market_data/
@@ -185,3 +184,5 @@ certificates/
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+/venv311

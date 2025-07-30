@@ -67,7 +67,7 @@ export default function ModelTrainer({
         response = await axios.post("", TrainData)
       }
 
-      console.log("Respuesta entrenamiento", response.data)
+      ("Respuesta entrenamiento", response.data)
       setTrained(true)
       onTrainingComplete(true)
       setLoadingState("¡Entrenamiento completado exitosamente!")

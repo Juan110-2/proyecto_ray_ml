@@ -186,18 +186,19 @@ export default function InferenceEngine({
     }
 
     try {
-      console.log(InferenceData)
+      (InferenceData)
       setLoadingState("Procesando datos del mercado...")
 
       const response = await axios.post("http://127.0.0.1:8002/inference", InferenceData)
       console.log("Respuesta Inferencia", response.data)
       console.log("Respuesta Inferencia", response.data.path)
 
+
       setLoadingState("Generando predicciones...")
       onInferenceComplete(response.data, response.data.path)
       setLoadingState("¡Inferencia completada!")
     } catch (error) {
-      console.log("Error al hacer la inferencia", error)
+      ("Error al hacer la inferencia", error)
       setLoadingState("Error en la inferencia")
     } finally {
       setTimeout(() => {
