@@ -13,6 +13,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /app
 WORKDIR /app
 
-EXPOSE 8001
+EXPOSE 8002
 
 CMD ["python", "-m", "app.main"]

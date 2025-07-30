@@ -189,9 +189,10 @@ export default function InferenceEngine({
       (InferenceData)
       setLoadingState("Procesando datos del mercado...")
 
-      const response = await axios.post("http://127.0.0.1:8000/", InferenceData)
-      ("Respuesta Inferencia", response.data)
-      ("Respuesta Inferencia", response.data.path)
+      const response = await axios.post("http://127.0.0.1:8002/inference", InferenceData)
+      console.log("Respuesta Inferencia", response.data)
+      console.log("Respuesta Inferencia", response.data.path)
+
 
       setLoadingState("Generando predicciones...")
       onInferenceComplete(response.data, response.data.path)
