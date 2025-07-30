@@ -49,35 +49,87 @@ export default function ChartVisualization({
   }
 
   // Función para obtener datos reales del CSV
-  const fetchRealData = async () => {
-    setIsLoading(true);
-    setLoadingState("Obteniendo datos reales del servidor...");
-  
-    try {
-      const response = await axios.post("http://localhost:8002/inference/plot/", {
-        url: plotUrl,
-      });
-  
-      const parsedData = response.data;
-      ("Datos recibidos:", parsedData.slice(0, 3));
-      
-      // Detectar ticker y columnas
-      const { ticker: detectedTicker } = detectTickerAndColumns(parsedData);
-      setTicker(detectedTicker);
-  
-      setRealData(parsedData);
-      setLoadingState("¡Datos reales cargados exitosamente!");
-      onChartUpdate("", true);
-    } catch (error) {
-      console.error("Error al obtener datos:", error);
-      setLoadingState("Error al obtener datos del servidor");
-    } finally {
-      setTimeout(() => {
-        setIsLoading(false);
-        setLoadingState("");
-      }, 2000);
+// … dentro de ChartVisualization
+
+// 1) fetchRealData
+const fetchRealData = async () => {
+  setIsLoading(true);
+  setLoadingState("Obteniendo datos reales del servidor…");
+
+  const url = "http://localhost:8002/plot/";
+  const payload = { url: plotUrl };
+
+  console.group("🔍 DEBUG fetchRealData");
+  console.log("URL:", url);
+  console.log("Payload:", payload);
+
+  try {
+    const response = await axios.post(url, payload);
+    console.log("✅ response.status:", response.status);
+    console.log("✅ response.data (primeros 3):", response.data.slice(0, 3));
+
+    setRealData(response.data);
+    setTicker(detectTickerAndColumns(response.data).ticker);
+    setLoadingState("¡Datos reales cargados exitosamente!");
+    onChartUpdate("", true);
+  } catch (error: any) {
+    console.error("❌ Error en fetchRealData:", error);
+    if (axios.isAxiosError(error)) {
+      console.error("– error.response?.status:", error.response?.status);
+      console.error("– error.response?.data:", error.response?.data);
+      console.error("– error.request:", error.request);
     }
-  };
+    console.error("– error.message:", error.message);
+    setLoadingState("Error al obtener datos del servidor");
+  } finally {
+    console.groupEnd();
+    setTimeout(() => {
+      setIsLoading(false);
+      setLoadingState("");
+    }, 2000);
+  }
+}
+
+// 2) obtenerGrafica
+const obtenerGrafica = async () => {
+  if (!plotUrl) return;
+
+  setIsLoading(true);
+  setLoadingState("Obteniendo datos de la API…");
+
+  const url = "http://localhost:8002/plot/";
+  const payload = { url: plotUrl };
+
+  console.group("🔍 DEBUG obtenerGrafica");
+  console.log("URL:", url);
+  console.log("Payload:", payload);
+
+  try {
+    const response = await axios.post(url, payload);
+    console.log("✅ response.status:", response.status);
+    console.log("✅ response.data (primeros 3):", response.data.slice(0, 3));
+
+    setChartJsonData(response.data);
+    setTicker(detectTickerAndColumns(response.data).ticker);
+    setLoadingState("¡Datos de API cargados exitosamente!");
+    onChartUpdate("", true);
+  } catch (error: any) {
+    console.error("❌ Error en obtenerGrafica:", error);
+    if (axios.isAxiosError(error)) {
+      console.error("– error.response?.status:", error.response?.status);
+      console.error("– error.response?.data:", error.response?.data);
+      console.error("– error.request:", error.request);
+    }
+    console.error("– error.message:", error.message);
+    setLoadingState("Usando datos del CSV como respaldo");
+  } finally {
+    console.groupEnd();
+    setTimeout(() => {
+      setIsLoading(false);
+      setLoadingState("");
+    }, 2000);
+  }
+}
 
   // Función para procesar datos (solo formatear, NO calcular)
   const processData = (data) => {
@@ -116,37 +168,44 @@ export default function ChartVisualization({
   // Agregar useEffect para generar gráfica automáticamente cuando hay plotUrl
   useEffect(() => {
     const obtenerGrafica = async () => {
-      if (!plotUrl) return
+      if (!plotUrl) return;
 
-      setIsLoading(true)
-      setLoadingState("Obteniendo datos de la API...")
+      setIsLoading(true);
+      setLoadingState("Obteniendo datos de la API…");
+
+      const url = "http://localhost:8002/plot/";
+      const payload = { url: plotUrl };
+
+      console.group("🔍 DEBUG obtenerGrafica");
+      console.log("URL:", url);
+      console.log("Payload:", payload);
 
       try {
-        const jsonResponse = await axios.post("http://localhost:8002/inference/plot/", {
-          url: plotUrl,
-        });
-        
-        const rawData = jsonResponse.data
-        console.log("Datos de API recibidos:", rawData);
-        
-        // Detectar ticker y columnas
-        const { ticker: detectedTicker } = detectTickerAndColumns(rawData);
-        setTicker(detectedTicker);
-        
-        setChartJsonData(rawData)
-        setLoadingState("¡Datos de API cargados exitosamente!")
-        onChartUpdate("", true)
-      } catch (error) {
-        console.error("Error al obtener los datos de la API:", error)
-        setLoadingState("Usando datos del CSV como respaldo")
+        const response = await axios.post(url, payload);
+        console.log("✅ response.status:", response.status);
+        console.log("✅ response.data (primeros 3):", response.data.slice(0, 3));
+
+        setChartJsonData(response.data);
+        setTicker(detectTickerAndColumns(response.data).ticker);
+        setLoadingState("¡Datos de API cargados exitosamente!");
+        onChartUpdate("", true);
+      } catch (error: any) {
+        console.error("❌ Error en obtenerGrafica:", error);
+        if (axios.isAxiosError(error)) {
+          console.error("– error.response?.status:", error.response?.status);
+          console.error("– error.response?.data:", error.response?.data);
+          console.error("– error.request:", error.request);
+        }
+        console.error("– error.message:", error.message);
+        setLoadingState("Usando datos del CSV como respaldo");
       } finally {
+        console.groupEnd();
         setTimeout(() => {
-          setIsLoading(false)
-          setLoadingState("")
-        }, 2000)
+          setIsLoading(false);
+          setLoadingState("");
+        }, 2000);
       }
     }
-
     obtenerGrafica()
   }, [plotUrl])
 
@@ -161,9 +220,9 @@ export default function ChartVisualization({
 
   // Debug: Mostrar algunos valores para verificar
   if (formattedData.length > 0) {
-   console.log("Primeros 3 valores formateados:", formattedData.slice(0, 3));
-   console.log("Último valor Strategy:", finalStrategyReturn);
-   console.log("Último valor Buy&Hold:", finalBuyHoldReturn);
+    ("Primeros 3 valores formateados:", formattedData.slice(0, 3))
+    ("Último valor Strategy:", finalStrategyReturn)
+    ("Último valor Buy&Hold:", finalBuyHoldReturn)
   }
 
   // Calcular métricas básicas (simplificadas)
@@ -201,7 +260,7 @@ export default function ChartVisualization({
       color: "hsl(var(--chart-1))",
     },
     buyHoldReturn: {
-      label: `${ticker} Buy&Hold`,
+      label: ${ticker} Buy&Hold,
       color: "hsl(var(--chart-2))",
     },
   }
@@ -306,7 +365,7 @@ export default function ChartVisualization({
               <YAxis
                 stroke="#616161"
                 fontSize={12}
-                tickFormatter={(value) => `${value.toFixed(1)}%`}
+                tickFormatter={(value) => ${value.toFixed(1)}%}
                 domain={['dataMin', 'dataMax']}
                 label={{
                   value: "Cumulative Return (%)",
@@ -321,21 +380,21 @@ export default function ChartVisualization({
                   <ChartTooltipContent
                     className="bg-slate-900 text-white border-slate-700"
                     formatter={(value, name) => [
-                      `${parseFloat(value).toFixed(2)}%`,
-                      name === "strategyReturn" ? "Strategy Return" : `${ticker} Buy&Hold`,
+                      ${parseFloat(value).toFixed(2)}%,
+                      name === "strategyReturn" ? "Strategy Return" : ${ticker} Buy&Hold,
                     ]}
                     labelFormatter={(label, payload) => {
                       if (payload && payload[0]) {
-                        return `Date: ${payload[0].payload.fullDate}`
+                        return Date: ${payload[0].payload.fullDate}
                       }
-                      return `Date: ${label}`
+                      return Date: ${label}
                     }}
                   />
                 }
               />
               <Legend
                 wrapperStyle={{ color: "#616161", paddingTop: "20px" }}
-                formatter={(value) => (value === "strategyReturn" ? "Strategy Return" : `${ticker} Buy&Hold`)}
+                formatter={(value) => (value === "strategyReturn" ? "Strategy Return" : ${ticker} Buy&Hold)}
               />
               <Line
                 type="monotone"
@@ -413,7 +472,7 @@ export default function ChartVisualization({
                 >
                   {parseFloat(finalStrategyReturn) > parseFloat(finalBuyHoldReturn)
                     ? "🚀 Estrategia IA"
-                    : `📈 ${ticker} Buy & Hold`}
+                    : 📈 ${ticker} Buy & Hold}
                 </span>
               </div>
             </div>
@@ -429,7 +488,7 @@ export default function ChartVisualization({
               const url = URL.createObjectURL(dataBlob)
               const link = document.createElement("a")
               link.href = url
-              link.download = `${ticker.toLowerCase()}-trading-analysis.json`
+              link.download = ${ticker.toLowerCase()}-trading-analysis.json
               link.click()
             }}
             className="bg-purple-600 hover:bg-purple-700 text-white"
@@ -443,7 +502,7 @@ export default function ChartVisualization({
               const csvContent = [
                 "Date,Strategy Return (%),Buy&Hold Return (%),Strategy Cumulative (%),Buy&Hold Cumulative (%)",
                 ...formattedData.map(
-                  (d) => `${d.fullDate},${d.strategyDaily},${d.buyHoldDaily},${d.strategyReturn},${d.buyHoldReturn}`,
+                  (d) => ${d.fullDate},${d.strategyDaily},${d.buyHoldDaily},${d.strategyReturn},${d.buyHoldReturn},
                 ),
               ].join("\n")
 
@@ -451,7 +510,7 @@ export default function ChartVisualization({
               const url = URL.createObjectURL(dataBlob)
               const link = document.createElement("a")
               link.href = url
-              link.download = `${ticker.toLowerCase()}-trading-analysis.csv`
+              link.download = ${ticker.toLowerCase()}-trading-analysis.csv
               link.click()
             }}
             className="bg-green-600 hover:bg-green-700 text-white"

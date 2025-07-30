@@ -9,4 +9,7 @@ services:
         - SUPABASE_KEY=${SUPABASE_KEY}
       ports:
         - "8002:8002"
+
       restart: always
+    
+
