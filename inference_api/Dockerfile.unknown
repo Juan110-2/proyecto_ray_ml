@@ -15,4 +15,4 @@ WORKDIR /app
 
 EXPOSE 8002
 
-CMD ["python", "-m", "app.main"]
+CMD ["python", "inferenceAPI.py"]

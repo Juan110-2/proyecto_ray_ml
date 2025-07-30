@@ -49,35 +49,87 @@ export default function ChartVisualization({
   }
 
   // Función para obtener datos reales del CSV
-  const fetchRealData = async () => {
-    setIsLoading(true);
-    setLoadingState("Obteniendo datos reales del servidor...");
-  
-    try {
-      const response = await axios.post("http://localhost:8000/plot/", {
-        url: plotUrl,
-      });
-  
-      const parsedData = response.data;
-      ("Datos recibidos:", parsedData.slice(0, 3));
-      
-      // Detectar ticker y columnas
-      const { ticker: detectedTicker } = detectTickerAndColumns(parsedData);
-      setTicker(detectedTicker);
-  
-      setRealData(parsedData);
-      setLoadingState("¡Datos reales cargados exitosamente!");
-      onChartUpdate("", true);
-    } catch (error) {
-      console.error("Error al obtener datos:", error);
-      setLoadingState("Error al obtener datos del servidor");
-    } finally {
-      setTimeout(() => {
-        setIsLoading(false);
-        setLoadingState("");
-      }, 2000);
+// … dentro de ChartVisualization
+
+// 1) fetchRealData
+const fetchRealData = async () => {
+  setIsLoading(true);
+  setLoadingState("Obteniendo datos reales del servidor…");
+
+  const url = "http://localhost:8000/plot/";
+  const payload = { url: plotUrl };
+
+  console.group("🔍 DEBUG fetchRealData");
+  console.log("URL:", url);
+  console.log("Payload:", payload);
+
+  try {
+    const response = await axios.post(url, payload);
+    console.log("✅ response.status:", response.status);
+    console.log("✅ response.data (primeros 3):", response.data.slice(0, 3));
+
+    setRealData(response.data);
+    setTicker(detectTickerAndColumns(response.data).ticker);
+    setLoadingState("¡Datos reales cargados exitosamente!");
+    onChartUpdate("", true);
+  } catch (error: any) {
+    console.error("❌ Error en fetchRealData:", error);
+    if (axios.isAxiosError(error)) {
+      console.error("– error.response?.status:", error.response?.status);
+      console.error("– error.response?.data:", error.response?.data);
+      console.error("– error.request:", error.request);
     }
-  };
+    console.error("– error.message:", error.message);
+    setLoadingState("Error al obtener datos del servidor");
+  } finally {
+    console.groupEnd();
+    setTimeout(() => {
+      setIsLoading(false);
+      setLoadingState("");
+    }, 2000);
+  }
+}
+
+// 2) obtenerGrafica
+const obtenerGrafica = async () => {
+  if (!plotUrl) return;
+
+  setIsLoading(true);
+  setLoadingState("Obteniendo datos de la API…");
+
+  const url = "http://localhost:8000/plot/";
+  const payload = { url: plotUrl };
+
+  console.group("🔍 DEBUG obtenerGrafica");
+  console.log("URL:", url);
+  console.log("Payload:", payload);
+
+  try {
+    const response = await axios.post(url, payload);
+    console.log("✅ response.status:", response.status);
+    console.log("✅ response.data (primeros 3):", response.data.slice(0, 3));
+
+    setChartJsonData(response.data);
+    setTicker(detectTickerAndColumns(response.data).ticker);
+    setLoadingState("¡Datos de API cargados exitosamente!");
+    onChartUpdate("", true);
+  } catch (error: any) {
+    console.error("❌ Error en obtenerGrafica:", error);
+    if (axios.isAxiosError(error)) {
+      console.error("– error.response?.status:", error.response?.status);
+      console.error("– error.response?.data:", error.response?.data);
+      console.error("– error.request:", error.request);
+    }
+    console.error("– error.message:", error.message);
+    setLoadingState("Usando datos del CSV como respaldo");
+  } finally {
+    console.groupEnd();
+    setTimeout(() => {
+      setIsLoading(false);
+      setLoadingState("");
+    }, 2000);
+  }
+}
 
   // Función para procesar datos (solo formatear, NO calcular)
   const processData = (data) => {
@@ -116,37 +168,44 @@ export default function ChartVisualization({
   // Agregar useEffect para generar gráfica automáticamente cuando hay plotUrl
   useEffect(() => {
     const obtenerGrafica = async () => {
-      if (!plotUrl) return
+      if (!plotUrl) return;
 
-      setIsLoading(true)
-      setLoadingState("Obteniendo datos de la API...")
+      setIsLoading(true);
+      setLoadingState("Obteniendo datos de la API…");
+
+      const url = "http://localhost:8000/plot/";
+      const payload = { url: plotUrl };
+
+      console.group("🔍 DEBUG obtenerGrafica");
+      console.log("URL:", url);
+      console.log("Payload:", payload);
 
       try {
-        const jsonResponse = await axios.post("http://localhost:8000/plot/", {
-          url: plotUrl,
-        });
-        
-        const rawData = jsonResponse.data
-        ("Datos de API recibidos:", rawData)
-        
-        // Detectar ticker y columnas
-        const { ticker: detectedTicker } = detectTickerAndColumns(rawData);
-        setTicker(detectedTicker);
-        
-        setChartJsonData(rawData)
-        setLoadingState("¡Datos de API cargados exitosamente!")
-        onChartUpdate("", true)
-      } catch (error) {
-        console.error("Error al obtener los datos de la API:", error)
-        setLoadingState("Usando datos del CSV como respaldo")
+        const response = await axios.post(url, payload);
+        console.log("✅ response.status:", response.status);
+        console.log("✅ response.data (primeros 3):", response.data.slice(0, 3));
+
+        setChartJsonData(response.data);
+        setTicker(detectTickerAndColumns(response.data).ticker);
+        setLoadingState("¡Datos de API cargados exitosamente!");
+        onChartUpdate("", true);
+      } catch (error: any) {
+        console.error("❌ Error en obtenerGrafica:", error);
+        if (axios.isAxiosError(error)) {
+          console.error("– error.response?.status:", error.response?.status);
+          console.error("– error.response?.data:", error.response?.data);
+          console.error("– error.request:", error.request);
+        }
+        console.error("– error.message:", error.message);
+        setLoadingState("Usando datos del CSV como respaldo");
       } finally {
+        console.groupEnd();
         setTimeout(() => {
-          setIsLoading(false)
-          setLoadingState("")
-        }, 2000)
+          setIsLoading(false);
+          setLoadingState("");
+        }, 2000);
       }
     }
-
     obtenerGrafica()
   }, [plotUrl])
 

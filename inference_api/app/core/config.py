@@ -10,7 +10,7 @@ class Settings:
     SUPABASE_KEY: str = os.getenv('SUPABASE_KEY')
     
     RAY_HOST: str = '0.0.0.0'
-    RAY_PORT: int = 8001
+    RAY_PORT: int = 8002
     
     CORS_ORIGINS: list = ["*"]
     CORS_CREDENTIALS: bool = True
