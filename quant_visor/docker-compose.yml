@@ -1,0 +1,26 @@
+services:
+  api:
+    build: .
+    container_name: quant-visor-local
+    ports:
+      - "8001:8001"
+    environment:
+      - DEBUG=True
+      - ENVIRONMENT=development
+      - HOST=0.0.0.0
+      - PORT=8001
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      - RAY_NUM_CPUS=2
+      - RAY_OBJECT_STORE_MEMORY=200000000
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./app:/app/app  # Para desarrollo hot-reload
+      - ./data:/app/data
+      - ./.env:/app/.env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped

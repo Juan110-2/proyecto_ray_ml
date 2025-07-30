@@ -54,7 +54,7 @@ export default function ChartVisualization({
     setLoadingState("Obteniendo datos reales del servidor...");
   
     try {
-      const response = await axios.post("http://localhost:8000/plot/", {
+      const response = await axios.post("http://localhost:8002/inference/plot/", {
         url: plotUrl,
       });
   
@@ -122,7 +122,7 @@ export default function ChartVisualization({
       setLoadingState("Obteniendo datos de la API...")
 
       try {
-        const jsonResponse = await axios.post("http://localhost:8000/plot/", {
+        const jsonResponse = await axios.post("http://localhost:8002/inference/plot/", {
           url: plotUrl,
         });
         

@@ -11,7 +11,7 @@ class Settings:
     
     # Configuración de Ray
     RAY_HOST: str = '0.0.0.0'
-    RAY_PORT: int = 8001
+    RAY_PORT: int = 8002
     
     # Configuración de CORS
     CORS_ORIGINS: list = ["*"]
