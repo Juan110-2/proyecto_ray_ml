@@ -1,10 +1,13 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from ray import serve
 from app.api.endpoints import TrainAPI
 from app.core.config import settings
 import logging
 import os
 import ray
+import sys
+import signal
 
 # Configuración básica de logging
 logging.basicConfig(
@@ -15,10 +18,18 @@ logger = logging.getLogger(__name__)
 
 class PortfolioService:
     def __init__(self):
+        # Crear la app FastAPI y aplicar CORS
         self.app = FastAPI(
             title="Portfolio Optimization API",
             description="API for portfolio optimization using Ray Serve",
             version="1.0.0"
+        )
+        self.app.add_middleware(
+            CORSMiddleware,
+            allow_origins=["*"],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
         )
         self._setup_routes()
 
@@ -46,12 +57,20 @@ class PortfolioService:
             logger.info("Inicializando Ray...")
             ray.init(**self.configure_ray())
 
-            logger.info("Iniciando Ray Serve...")
+            logger.info("Iniciando Ray Serve con CORS...")
             serve.start(
                 http_options={
                     'host': settings.HOST,
                     'port': settings.PORT,
-                    'location': 'EveryNode'
+                    'location': 'EveryNode',
+                    'http_middlewares': [
+                        (CORSMiddleware, {
+                            'allow_origins': ['*'],
+                            'allow_credentials': True,
+                            'allow_methods': ['*'],
+                            'allow_headers': ['*'],
+                        })
+                    ]
                 }
             )
 
@@ -71,25 +90,40 @@ class PortfolioService:
     def shutdown_services(self):
         """Apaga los servicios correctamente"""
         logger.info("Deteniendo servicios...")
-        serve.shutdown()
+        try:
+            serve.shutdown()
+        except Exception:
+            logger.warning("Ray Serve ya estaba detenido o no inicializado.")
         if ray.is_initialized():
             ray.shutdown()
         logger.info("Servicios detenidos correctamente")
 
 
-if __name__ == '__main__':
+def main():
     service = PortfolioService()
+
+    # Manejo de señales SIGINT/SIGTERM
+    def _handle_signal(signum, frame):
+        logger.info(f"Recibida señal {signum}, iniciando apagado...")
+        service.shutdown_services()
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, _handle_signal)
+    signal.signal(signal.SIGTERM, _handle_signal)
 
     try:
         service.start_services()
-        input("⏳ Presiona Enter para detener los servicios...\n")
 
-    except KeyboardInterrupt:
-        logger.info("Recibida señal de interrupción")
+        if sys.stdin.isatty():
+            input("⏳ Presiona Enter para detener los servicios...\n")
+        else:
+            signal.pause()
 
     except Exception as e:
         logger.error(f"Error fatal: {e}")
-
     finally:
         service.shutdown_services()
         logger.info("Aplicación terminada")
+
+if __name__ == '__main__':
+    main()
