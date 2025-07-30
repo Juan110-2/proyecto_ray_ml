@@ -3,12 +3,16 @@ services:
     build: .
     container_name: quant-visor-local
     ports:
+
       - "8000:8000"
+
     environment:
       - DEBUG=True
       - ENVIRONMENT=development
       - HOST=0.0.0.0
+
       - PORT=8000
+
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_KEY=${SUPABASE_KEY}
       - RAY_NUM_CPUS=2

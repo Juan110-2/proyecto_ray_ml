@@ -260,7 +260,7 @@ const obtenerGrafica = async () => {
       color: "hsl(var(--chart-1))",
     },
     buyHoldReturn: {
-      label: `${ticker} Buy&Hold`,
+      label: ${ticker} Buy&Hold,
       color: "hsl(var(--chart-2))",
     },
   }
@@ -365,7 +365,7 @@ const obtenerGrafica = async () => {
               <YAxis
                 stroke="#616161"
                 fontSize={12}
-                tickFormatter={(value) => `${value.toFixed(1)}%`}
+                tickFormatter={(value) => ${value.toFixed(1)}%}
                 domain={['dataMin', 'dataMax']}
                 label={{
                   value: "Cumulative Return (%)",
@@ -380,21 +380,21 @@ const obtenerGrafica = async () => {
                   <ChartTooltipContent
                     className="bg-slate-900 text-white border-slate-700"
                     formatter={(value, name) => [
-                      `${parseFloat(value).toFixed(2)}%`,
-                      name === "strategyReturn" ? "Strategy Return" : `${ticker} Buy&Hold`,
+                      ${parseFloat(value).toFixed(2)}%,
+                      name === "strategyReturn" ? "Strategy Return" : ${ticker} Buy&Hold,
                     ]}
                     labelFormatter={(label, payload) => {
                       if (payload && payload[0]) {
-                        return `Date: ${payload[0].payload.fullDate}`
+                        return Date: ${payload[0].payload.fullDate}
                       }
-                      return `Date: ${label}`
+                      return Date: ${label}
                     }}
                   />
                 }
               />
               <Legend
                 wrapperStyle={{ color: "#616161", paddingTop: "20px" }}
-                formatter={(value) => (value === "strategyReturn" ? "Strategy Return" : `${ticker} Buy&Hold`)}
+                formatter={(value) => (value === "strategyReturn" ? "Strategy Return" : ${ticker} Buy&Hold)}
               />
               <Line
                 type="monotone"
@@ -472,7 +472,7 @@ const obtenerGrafica = async () => {
                 >
                   {parseFloat(finalStrategyReturn) > parseFloat(finalBuyHoldReturn)
                     ? "🚀 Estrategia IA"
-                    : `📈 ${ticker} Buy & Hold`}
+                    : 📈 ${ticker} Buy & Hold}
                 </span>
               </div>
             </div>
@@ -488,7 +488,7 @@ const obtenerGrafica = async () => {
               const url = URL.createObjectURL(dataBlob)
               const link = document.createElement("a")
               link.href = url
-              link.download = `${ticker.toLowerCase()}-trading-analysis.json`
+              link.download = ${ticker.toLowerCase()}-trading-analysis.json
               link.click()
             }}
             className="bg-purple-600 hover:bg-purple-700 text-white"
@@ -502,7 +502,7 @@ const obtenerGrafica = async () => {
               const csvContent = [
                 "Date,Strategy Return (%),Buy&Hold Return (%),Strategy Cumulative (%),Buy&Hold Cumulative (%)",
                 ...formattedData.map(
-                  (d) => `${d.fullDate},${d.strategyDaily},${d.buyHoldDaily},${d.strategyReturn},${d.buyHoldReturn}`,
+                  (d) => ${d.fullDate},${d.strategyDaily},${d.buyHoldDaily},${d.strategyReturn},${d.buyHoldReturn},
                 ),
               ].join("\n")
 
@@ -510,7 +510,7 @@ const obtenerGrafica = async () => {
               const url = URL.createObjectURL(dataBlob)
               const link = document.createElement("a")
               link.href = url
-              link.download = `${ticker.toLowerCase()}-trading-analysis.csv`
+              link.download = ${ticker.toLowerCase()}-trading-analysis.csv
               link.click()
             }}
             className="bg-green-600 hover:bg-green-700 text-white"

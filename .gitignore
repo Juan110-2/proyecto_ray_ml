@@ -75,11 +75,15 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.venv
 
 # Python virtual environments
 inference_api/venv/
 inference_api/env/
 inference_api/.venv/
+inference_api/.venv311/
+
+
 
 # Jupyter Notebook
 .ipynb_checkpoints

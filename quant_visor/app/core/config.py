@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     
     # Server
     HOST: str = "0.0.0.0"
-    PORT: int = 8000
+    PORT: int = 8001
     WORKERS: int = os.cpu_count() or 1
     RELOAD: bool = False
     
