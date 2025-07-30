@@ -173,7 +173,7 @@ const obtenerGrafica = async () => {
       setIsLoading(true);
       setLoadingState("Obteniendo datos de la API…");
 
-      const url = "http://localhost:2/plot/";
+      const url = "http://localhost:8002/plot/";
       const payload = { url: plotUrl };
 
       console.group("🔍 DEBUG obtenerGrafica");
