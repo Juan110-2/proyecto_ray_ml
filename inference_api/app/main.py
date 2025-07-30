@@ -7,10 +7,10 @@ from app.core.config import settings
 
 app = FastAPI(title="Inference API", version="1.0.0")
 
-# Configurar middlewares
+
 setup_middleware(app)
 
-# Incluir rutas
+
 app.include_router(inference_router)
 app.include_router(plot_router)  # NUEVO
 
