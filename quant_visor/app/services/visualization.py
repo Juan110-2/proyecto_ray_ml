@@ -63,11 +63,9 @@ class FinancialVisualizer:
             Figure de Plotly
         """
         try:
-            # Calcular rendimiento acumulado
             cumulative_returns = (1 + returns).cumprod() - 1
             fig = go.Figure()
 
-            # Añadir serie principal
             fig.add_trace(go.Scatter(
                 x=cumulative_returns.index,
                 y=cumulative_returns,
@@ -76,7 +74,6 @@ class FinancialVisualizer:
                 line=dict(width=2.5)
             ))
 
-            # Añadir benchmark si existe
             if benchmark is not None:
                 benchmark_cumulative = (1 + benchmark).cumprod() - 1
                 fig.add_trace(go.Scatter(
@@ -87,7 +84,6 @@ class FinancialVisualizer:
                     line=dict(width=2, dash='dot')
                 ))
 
-            # Configuración de layout
             fig.update_layout(
                 title=title,
                 yaxis_title='Rendimiento Acumulado',
@@ -96,7 +92,6 @@ class FinancialVisualizer:
                 **self.theme
             )
 
-            # Añadir línea de cero
             fig.add_hline(y=0, line_width=1, line_dash="dash", line_color="grey")
 
             return fig
@@ -123,19 +118,16 @@ class FinancialVisualizer:
             Figure con subplots de métricas
         """
         try:
-            # Calcular métricas
             rolling_vol = returns.rolling(window).std() * np.sqrt(252)
             rolling_sharpe = (returns.rolling(window).mean() / returns.rolling(window).std()) * np.sqrt(252)
             drawdown = (1 + returns).cumprod() / (1 + returns).cumprod().cummax() - 1
 
-            # Crear figura con subplots
             fig = make_subplots(
                 rows=3, cols=1,
                 subplot_titles=('Volatilidad Anualizada', 'Ratio de Sharpe', 'Drawdown'),
                 vertical_spacing=0.1
             )
 
-            # Añadir trazas
             fig.add_trace(
                 go.Scatter(
                     x=rolling_vol.index,
@@ -167,7 +159,6 @@ class FinancialVisualizer:
                 row=3, col=1
             )
 
-            # Configuración de layout
             fig.update_layout(
                 height=800,
                 showlegend=False,
@@ -175,7 +166,6 @@ class FinancialVisualizer:
                 **self.theme
             )
 
-            # Configurar ejes
             fig.update_yaxes(title_text="Volatilidad", row=1, col=1)
             fig.update_yaxes(title_text="Sharpe Ratio", row=2, col=1)
             fig.update_yaxes(title_text="Drawdown", row=3, col=1)
@@ -204,11 +194,9 @@ class FinancialVisualizer:
             Figure de Plotly
         """
         try:
-            # Crear DataFrame y ordenar
             df = pd.DataFrame.from_dict(weights, orient='index', columns=['weight'])
             df = df.sort_values('weight', ascending=False)
             
-            # Agrupar pequeños activos en 'Otros'
             if len(df) > 10:
                 others = df[10:].sum()
                 df = df[:10]
@@ -253,15 +241,12 @@ class FinancialVisualizer:
         try:
             report = {}
             
-            # Generar figuras
             returns_fig = self.plot_returns(returns, benchmark=benchmark)
             risk_fig = self.plot_risk_metrics(returns)
             
-            # Convertir a HTML/base64
             report['returns_chart'] = self._fig_to_base64(returns_fig)
             report['risk_chart'] = self._fig_to_base64(risk_fig)
             
-            # Calcular métricas clave
             report['metrics'] = self._calculate_performance_metrics(returns, benchmark)
             
             return report
@@ -310,20 +295,16 @@ class FinancialVisualizer:
             Imagen en base64
         """
         try:
-            # Crear figura matplotlib
             fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8))
             
-            # ACF
             plot_acf(returns, lags=lags, ax=ax1)
             ax1.set_title('Autocorrelación (ACF)')
             
-            # PACF
             plot_pacf(returns, lags=lags, ax=ax2)
             ax2.set_title('Autocorrelación Parcial (PACF)')
             
             plt.tight_layout()
             
-            # Convertir a base64
             buffer = BytesIO()
             plt.savefig(buffer, format='png')
             plt.close()

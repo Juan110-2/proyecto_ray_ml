@@ -15,12 +15,12 @@ import logging
 from datetime import datetime
 import time
 
-# Configuración inicial
+
 warnings.filterwarnings('ignore')
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Funciones auxiliares (las mismas que en tu código viejo)
+
 def split_df_by_tickers(df, batch_size=10):
     tickers = df.columns.get_level_values(1).unique()
     ticker_batches = np.array_split(tickers, batch_size)
@@ -40,9 +40,7 @@ def calculate_tecnical_indicators(data):
         df = df.stack()
         df.index.names = ['date', 'ticker']
         df.columns = df.columns.str.lower()
-        # Calculate Garman-Klass Volatility
         df['garman_klass_vol'] = ((np.log(df['high']) - np.log(df['low']))**2)/2 - (2*np.log(2)-1)*((np.log(df['adj close']) - np.log(df['open']))**2)
-        # Calculate RSI
         df['rsi'] = df.groupby(level=1)['adj close'].transform(lambda x: pandas_ta.rsi(close=x, length=20))
         def safe_bb_transform(x, col_idx):
             bb_result = pandas_ta.bbands(close=np.log1p(x), length=20)
@@ -53,7 +51,6 @@ def calculate_tecnical_indicators(data):
         df['bb_low'] = df.groupby(level=1)['adj close'].transform(lambda x: safe_bb_transform(x, 0))
         df['bb_mid'] = df.groupby(level=1)['adj close'].transform(lambda x: safe_bb_transform(x, 1))
         df['bb_high'] = df.groupby(level=1)['adj close'].transform(lambda x: safe_bb_transform(x, 2))
-        # Calculate ATR
         def compute_atr(stock_data):
             atr = pandas_ta.atr(high=stock_data['high'],
                                 low=stock_data['low'],
@@ -64,7 +61,6 @@ def calculate_tecnical_indicators(data):
             else:
                 return pd.Series([np.nan] * len(stock_data), index=stock_data.index)
         df['atr'] = df.groupby(level=1, group_keys=False).apply(compute_atr)
-        # Calculate MACD
         def compute_macd(close):
             try:
                 if len(close) < 35:  
@@ -88,10 +84,6 @@ def calculate_tecnical_indicators(data):
 
 @ray.remote(memory=600*1024*1024)
 def Calculate_Montly_Returns(data):
-
-  # To capture time series dynamics that reflect, for example,
-  # momentum patterns, we compute historical returns using the method
-  # .pct_change(lag), that is, returns over various monthly periods as identified by lags.
 
   data=data.stack()
   data.index.names=['date','ticker']
@@ -164,7 +156,6 @@ def calculate_return_for_date(start_date, fixed_dates, new_df, returns_dataframe
         return pd.DataFrame(portfolio_returns, index=temp_df.index, columns=['Strategy Return'])
 
     except Exception as e:
-        print(f"Error for {start_date}: {e}")
         return pd.DataFrame()
 
 class PortfolioOptimizer:

@@ -13,7 +13,7 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 import ray
 
-# Configuración inicial
+
 nltk.download('stopwords')
 nltk.download('wordnet')
 
@@ -78,7 +78,6 @@ class TwitterSentimentAnalyzer:
         if missing:
             raise ValueError(f"Missing required columns: {missing}")
             
-        # Convertir tipos de datos
         df = df.copy()
         df['date'] = pd.to_datetime(df['date'])
         
@@ -184,23 +183,18 @@ class TwitterSentimentAnalyzer:
         6. Cálculo de retornos
         """
         try:
-            # 1. Filtrado inicial
+
             filtered = self.filter_by_engagement(min_likes, min_comments)
             
-            # 2. Procesamiento de texto
             processed = self.preprocess_tweets(filtered)
             
-            # 3. Análisis de sentimiento
             analyzed = self.analyze_sentiment(processed)
             
-            # 4. Agrupamiento por temas (si hay suficientes datos)
             if len(analyzed) > 100:
                 analyzed = self.cluster_tweets(analyzed)
             
-            # 5. Generación de señales
             signals = self.generate_portfolio_signals(analyzed)
             
-            # 6. Simulación de retornos (implementar tu lógica específica)
             portfolio_returns = self._calculate_returns(signals)
             
             return portfolio_returns
@@ -211,7 +205,6 @@ class TwitterSentimentAnalyzer:
 
     def _calculate_returns(self, signals: pd.DataFrame) -> pd.DataFrame:
         """Implementa tu lógica específica para calcular retornos"""
-        # Ejemplo simplificado - reemplazar con tu implementación real
         returns = signals.groupby('date').apply(
             lambda x: np.average(x['score'], weights=x['engagement'])
         ).to_frame('strategy_return')
@@ -219,7 +212,6 @@ class TwitterSentimentAnalyzer:
         returns.index = pd.to_datetime(returns.index)
         return returns
 
-# Funciones de utilidad para manejo de datos
 def save_twitter_results(df: pd.DataFrame, path: str) -> None:
     """Guarda resultados en formato parquet"""
     try:

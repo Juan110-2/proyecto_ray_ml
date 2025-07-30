@@ -55,5 +55,4 @@ class StorageService:
                 )
             return response
         except Exception as e:
-            print(f'error uploading file: {e}')
             raise UploadError(f"Failed to upload portfolio data: {e}")
