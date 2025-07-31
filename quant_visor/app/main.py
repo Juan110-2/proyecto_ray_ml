@@ -1,95 +1,86 @@
+# main.py
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.cors import CORSMiddleware as StarletteCORSMiddleware
 from ray import serve
 from app.api.endpoints import TrainAPI
 from app.core.config import settings
-import logging
-import os
-import ray
-import sys
-import signal
+import logging, os, ray, sys, signal
 
-# Configuración básica de logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
 class PortfolioService:
     def __init__(self):
-        # Crear la app FastAPI y aplicar CORS
+        # La app FastAPI sólo la usamos para /health local
         self.app = FastAPI(
             title="Portfolio Optimization API",
             description="API for portfolio optimization using Ray Serve",
-            version="1.0.0"
+            version="1.0.0",
         )
-        self.app.add_middleware(
-            CORSMiddleware,
-            allow_origins=["*"],
-            allow_credentials=True,
-            allow_methods=["*"],
-            allow_headers=["*"],
-        )
-        self._setup_routes()
 
-    def _setup_routes(self):
-        @self.app.get("/health")
+        @self.app.get("/health", include_in_schema=False)
         async def health_check():
             return {
                 "status": "healthy",
-                "ray_initialized": ray.is_initialized()
+                "ray_initialized": ray.is_initialized(),
             }
 
+    # ---------- configuración ray ----------
     def configure_ray(self):
-        """Configura los parámetros de Ray"""
         return {
-            'num_cpus': int(os.getenv('RAY_NUM_CPUS', os.cpu_count() or 4)),
-            'num_gpus': int(os.getenv('RAY_NUM_GPUS', 0)),
-            'object_store_memory': int(os.getenv('RAY_OBJECT_STORE_MEMORY', 200 * 1024 * 1024)),
-            'ignore_reinit_error': True,
-            'include_dashboard': False
+            "num_cpus": int(os.getenv("RAY_NUM_CPUS", os.cpu_count() or 4)),
+            "num_gpus": int(os.getenv("RAY_NUM_GPUS", 0)),
+            "object_store_memory": int(
+                os.getenv("RAY_OBJECT_STORE_MEMORY", 200 * 1024 * 1024)
+            ),
+            "ignore_reinit_error": True,
+            "include_dashboard": False,
         }
 
+    # ---------- arranque ----------
     def start_services(self):
-        """Inicia todos los servicios integrados"""
         try:
-            logger.info("Inicializando Ray...")
+            logger.info("🔧 Inicializando Ray …")
             ray.init(**self.configure_ray())
 
-            logger.info("Iniciando Ray Serve con CORS...")
+            logger.info("🚀 Iniciando Ray Serve con CORS global …")
             serve.start(
                 http_options={
-                    'host': settings.HOST,
-                    'port': settings.PORT,
-                    'location': 'EveryNode',
-                    'http_middlewares': [
-                        (CORSMiddleware, {
-                            'allow_origins': ['*'],
-                            'allow_credentials': True,
-                            'allow_methods': ['*'],
-                            'allow_headers': ['*'],
-                        })
-                    ]
+                    "host": settings.HOST,
+                    "port": settings.PORT,
+                    "location": "EveryNode",
+                    # *** CORS a nivel de proxy HTTP ***
+                    "http_middlewares": [
+                        (
+                            StarletteCORSMiddleware,
+                            {
+                                "allow_origins": ["*"],
+                                "allow_credentials": True,
+                                "allow_methods": ["*"],
+                                "allow_headers": ["*"],
+                            },
+                        )
+                    ],
                 }
             )
 
-            logger.info("Desplegando TrainAPI...")
-            serve.run(
-                TrainAPI.bind(),
-                route_prefix='/train',
-                name="train_api"
-            )
+            logger.info("📦 Desplegando TrainAPI en /train …")
+            serve.run(TrainAPI.bind(), route_prefix="/train", name="train_api")
 
-            logger.info(f"Servicio iniciado en http://{settings.HOST}:{settings.PORT}")
+            logger.info(
+                f"✅ Servicio disponible en http://{settings.HOST}:{settings.PORT}"
+            )
 
         except Exception as e:
             logger.error(f"Error al iniciar servicios: {e}")
             raise
 
+    # ---------- apagado ----------
     def shutdown_services(self):
-        """Apaga los servicios correctamente"""
-        logger.info("Deteniendo servicios...")
+        logger.info("🛑 Deteniendo servicios …")
         try:
             serve.shutdown()
         except Exception:
@@ -98,13 +89,11 @@ class PortfolioService:
             ray.shutdown()
         logger.info("Servicios detenidos correctamente")
 
-
 def main():
     service = PortfolioService()
 
-    # Manejo de señales SIGINT/SIGTERM
-    def _handle_signal(signum, frame):
-        logger.info(f"Recibida señal {signum}, iniciando apagado...")
+    def _handle_signal(signum, _):
+        logger.info(f"⚠️  Recibida señal {signum}, apagando servicios …")
         service.shutdown_services()
         sys.exit(0)
 
@@ -113,17 +102,15 @@ def main():
 
     try:
         service.start_services()
-
         if sys.stdin.isatty():
-            input("⏳ Presiona Enter para detener los servicios...\n")
+            input("⏳ Pulsa Enter para detener los servicios …\n")
         else:
             signal.pause()
-
     except Exception as e:
         logger.error(f"Error fatal: {e}")
     finally:
         service.shutdown_services()
-        logger.info("Aplicación terminada")
+        logger.info("🔚 Aplicación terminada")
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
