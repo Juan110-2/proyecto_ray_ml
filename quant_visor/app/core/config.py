@@ -1,16 +1,16 @@
 import os
-import logging
 from pathlib import Path
-from typing import Optional, Dict, Any, List
-from pydantic import AnyUrl, field_validator
+from pydantic import AnyUrl, PostgresDsn, field_validator
 from pydantic_settings import BaseSettings
+from typing import Optional, Dict, Any, List
 from dotenv import load_dotenv
+import logging
 
 # Configura logging básico para la carga de configuración
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Ruta al archivo .env (dos niveles arriba de este archivo)
+# Carga variables de entorno desde .env en el directorio raíz
 env_path = Path(__file__).resolve().parents[2] / '.env'
 load_dotenv(dotenv_path=env_path)
 
@@ -19,55 +19,54 @@ class Settings(BaseSettings):
     Configuración principal de la aplicación usando pydantic.BaseSettings.
     Valida y carga automáticamente las variables de entorno.
     """
-
-    # Info general
+    
+    # Configuración básica
     APP_NAME: str = "Portfolio Optimization API"
     APP_VERSION: str = "1.0.0"
-    DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
-    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "production")
-
-    # Servidor
-    HOST: str = os.getenv("HOST", "127.0.0.1")
-    PORT: int = int(os.getenv("PORT", 8000))
+    DEBUG: bool = False
+    ENVIRONMENT: str = "production"  # 'development', 'staging', 'production'
+    
+    # Server
+    HOST: str = "0.0.0.0"
+    PORT: int = 8001
     WORKERS: int = os.cpu_count() or 1
-    RELOAD: bool = DEBUG
-
+    RELOAD: bool = False
+    
     # Ray Config
-    RAY_NUM_CPUS: int = int(os.getenv("RAY_NUM_CPUS", os.cpu_count() or 4))
-    RAY_NUM_GPUS: int = int(os.getenv("RAY_NUM_GPUS", 0))
-    RAY_OBJECT_STORE_MEMORY: int = int(os.getenv("RAY_OBJECT_STORE_MEMORY", 200 * 1024 * 1024))  # 200MB
-
+    RAY_NUM_CPUS: int = os.cpu_count() or 4
+    RAY_NUM_GPUS: int = 0
+    RAY_OBJECT_STORE_MEMORY: int = 200 * 1024 * 1024  # 200MB
+    
     # Supabase
-    SUPABASE_URL: AnyUrl = os.getenv("SUPABASE_URL")
-    SUPABASE_KEY: str = os.getenv("SUPABASE_KEY")
-    SUPABASE_BUCKET: str = os.getenv("SUPABASE_BUCKET", "datasets")
-
+    SUPABASE_URL: AnyUrl
+    SUPABASE_KEY: str
+    SUPABASE_BUCKET: str = "datasets"
+    
     # Yahoo Finance
     YAHOO_TIMEOUT: int = 30
     YAHOO_MAX_RETRIES: int = 3
-
+    
     # CORS
     CORS_ALLOW_ORIGINS: List[str] = ["*"]
     CORS_ALLOW_METHODS: List[str] = ["*"]
     CORS_ALLOW_HEADERS: List[str] = ["*"]
-
-    # Rutas locales
+    
+    # Rutas
     DATA_DIR: Path = Path(__file__).parents[2] / "data"
     MODEL_CACHE_DIR: Path = Path(__file__).parents[2] / "model_cache"
-
-    # Validadores
+    
+    # Validadores (actualizados para Pydantic v2)
     @field_validator('ENVIRONMENT')
     def validate_environment(cls, v):
-        allowed = {'development', 'staging', 'production'}
-        if v not in allowed:
-            raise ValueError(f"Environment must be one of {allowed}")
+        if v not in {'development', 'staging', 'production'}:
+            raise ValueError("Environment must be development, staging or production")
         return v
-
+    
     @field_validator('DATA_DIR', 'MODEL_CACHE_DIR')
-    def ensure_dirs_exist(cls, v):
+    def create_dirs_if_not_exist(cls, v):
         v.mkdir(parents=True, exist_ok=True)
         return v
-
+    
     @field_validator('CORS_ALLOW_ORIGINS', mode='before')
     def parse_cors_origins(cls, v):
         if isinstance(v, str):
@@ -82,10 +81,10 @@ class Settings(BaseSettings):
         "secrets_dir": "/run/secrets"  # Para Docker Secrets
     }
 
-# Instancia global de configuración
+# Instancia singleton de configuración
 try:
     settings = Settings()
-    logger.info(f"✅ Configuración cargada para entorno: {settings.ENVIRONMENT}")
+    logger.info(f"Configuración cargada para entorno: {settings.ENVIRONMENT}")
 except Exception as e:
-    logger.error(f"❌ Error cargando configuración: {e}")
+    logger.error(f"Error cargando configuración: {e}")
     raise

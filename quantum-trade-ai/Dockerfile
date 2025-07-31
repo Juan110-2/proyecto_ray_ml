@@ -67,7 +67,7 @@ USER nextjs
 EXPOSE 3000
 
 # Variables de entorno para runtime
-ENV PORT=3000
+ENV PORT 3000
 ENV HOSTNAME "0.0.0.0"
 
 # Comando para iniciar la aplicación

@@ -8,10 +8,10 @@ class Settings:
     
     SUPABASE_URL: str = os.getenv('SUPABASE_URL')
     SUPABASE_KEY: str = os.getenv('SUPABASE_KEY')
-
-    HOST: str = os.getenv('HOST', '127.0.0.1')  # valor por defecto por si no existe
-    PORT: int = int(os.getenv('PORT', 8000))    # asegúrate de castear a int
-
+    
+    RAY_HOST: str = '0.0.0.0'
+    RAY_PORT: int = 8002
+    
     CORS_ORIGINS: list = ["*"]
     CORS_CREDENTIALS: bool = True
     CORS_METHODS: list = ["*"]
