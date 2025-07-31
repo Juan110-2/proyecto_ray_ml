@@ -1,32 +1,74 @@
-# --- Etapa 1: Build ---------------------------------
+# Etapa 1: Dependencias
+FROM node:18-alpine AS deps
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Copiar archivos de dependencias
+COPY package.json package-lock.json* ./
+COPY pnpm-lock.yaml* ./
+
+# Instalar dependencias según el gestor de paquetes disponible
+RUN \
+  if [ -f pnpm-lock.yaml ]; then \
+    corepack enable pnpm && pnpm install --frozen-lockfile; \
+  elif [ -f package-lock.json ]; then \
+    npm ci; \
+  elif [ -f yarn.lock ]; then \
+    yarn --frozen-lockfile; \
+  else \
+    echo "No se encontró lockfile. Instalando con npm..." && npm install; \
+  fi
+
+# Etapa 2: Builder
 FROM node:18-alpine AS builder
 WORKDIR /app
 
-# Copia lock + package para cachear instalación
-COPY package.json package-lock.json ./
-# Si usas pnpm, en lugar de npm ci pon: RUN npm install -g pnpm && pnpm install
-RUN npm ci
-
-# Copia el resto del código y genera la build
+# Copiar dependencias instaladas
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npm run build
 
-# --- Etapa 2: Production ---------------------------
+# Variables de entorno para el build
+ENV NEXT_TELEMETRY_DISABLED 1
+
+# Build de la aplicación
+RUN \
+  if [ -f pnpm-lock.yaml ]; then \
+    corepack enable pnpm && pnpm run build; \
+  elif [ -f yarn.lock ]; then \
+    yarn build; \
+  else \
+    npm run build; \
+  fi
+
+# Etapa 3: Runner (Producción)
 FROM node:18-alpine AS runner
 WORKDIR /app
-ENV NODE_ENV=production
 
-# Sólo instalamos dependencias de producción
-COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
+# Variables de entorno
+ENV NODE_ENV production
+ENV NEXT_TELEMETRY_DISABLED 1
 
-# Copiamos artefactos de la build
-COPY --from=builder /app/.next ./.next
+# Crear usuario no-root
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Copiar archivos necesarios para producción
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/next.config.mjs ./next.config.mjs
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 
-# Exponemos el puerto que usa Next.js (por defecto 3000)
-EXPOSE 3001
+# Cambiar permisos al usuario nextjs
+RUN chown -R nextjs:nodejs /app
 
-# Arrancamos el servidor Next.js
-CMD ["npm", "run", "start"]
+# Cambiar al usuario no-root
+USER nextjs
+
+# Puerto de la aplicación
+EXPOSE 3000
+
+# Variables de entorno para runtime
+ENV PORT 3000
+ENV HOSTNAME "0.0.0.0"
+
+# Comando para iniciar la aplicación
+CMD ["node", "server.js"]

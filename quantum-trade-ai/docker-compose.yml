@@ -1,11 +1,49 @@
 services:
-  frontend:
+  # Servicio principal de Next.js
+  quantum-trade-web:
     build:
       context: .
       dockerfile: Dockerfile
-    image: quantum-trade-ai-frontend:latest
+      target: runner
+    container_name: quantum-trade-web
+    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
-      NODE_ENV: production
-    restart: unless-stopped
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+      # Agrega aquí otras variables de entorno necesarias
+      # - API_URL=http://api:8000
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => {if (r.statusCode !== 200) throw new Error()})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - quantum-trade-network
+
+  # Servicio de desarrollo (opcional)
+  quantum-trade-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: quantum-trade-dev
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=development
+      - WATCHPACK_POLLING=true
+    command: npm run dev
+    profiles:
+      - development
+    networks:
+      - quantum-trade-network
+
+networks:
+  quantum-trade-network:
+    driver: bridge

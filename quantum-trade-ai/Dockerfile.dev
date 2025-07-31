@@ -1,0 +1,32 @@
+# Dockerfile para desarrollo con hot-reload
+FROM node:18-alpine
+
+# Instalar dependencias del sistema
+RUN apk add --no-cache libc6-compat
+
+WORKDIR /app
+
+# Copiar archivos de dependencias
+COPY package.json package-lock.json* ./
+COPY pnpm-lock.yaml* ./
+
+# Instalar dependencias
+RUN \
+  if [ -f pnpm-lock.yaml ]; then \
+    corepack enable pnpm && pnpm install; \
+  elif [ -f package-lock.json ]; then \
+    npm install; \
+  elif [ -f yarn.lock ]; then \
+    yarn install; \
+  else \
+    npm install; \
+  fi
+
+# Copiar el resto del código
+COPY . .
+
+# Exponer puerto
+EXPOSE 3000
+
+# Comando por defecto
+CMD ["npm", "run", "dev"]
