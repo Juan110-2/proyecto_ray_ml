@@ -63,7 +63,7 @@ export default function ModelTrainer({
           params: TrainData,
         })
       } else {
-        response = await axios.post("http://127.0.0.1:8001/train/yahoofinance", TrainData)
+        response = await axios.post("http://localhost:8002/train/yahoofinance", TrainData)
         response = await axios.post("", TrainData)
       }
 
