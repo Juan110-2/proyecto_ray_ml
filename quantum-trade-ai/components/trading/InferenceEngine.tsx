@@ -185,17 +185,11 @@ export default function InferenceEngine({
     index: selectedIndex,
   };
 
-  console.group("🔍 DEBUG Inference");
-  console.log("Endpoint URL:", "http://127.0.0.1:8002/inference"); 
-  console.log("Payload:", InferenceData);
+
 
   try {
     setLoadingState("Procesando datos del mercado...");
     const response = await axios.post("http://127.0.0.1:8002/inference", InferenceData);
-
-    console.log("✅ Status code:", response.status);
-    console.log("✅ Response data:", response.data);
-
     setLoadingState("Generando predicciones...");
     onInferenceComplete(response.data, response.data.path);
     setLoadingState("¡Inferencia completada!");

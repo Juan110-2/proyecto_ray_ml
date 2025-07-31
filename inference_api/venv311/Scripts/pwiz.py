@@ -1,4 +1,4 @@
-#!E:\Univalle\13. Séptimo Semestre (Repetición)\Infraestructuras paralelas\Proyecto_repo1\proyecto_ray_ml\inference_api\venv311\Scripts\python.exe
+#!C:\Users\braya\Downloads\Proyecto\proyecto_ray_ml\inference_api\venv311\Scripts\python.exe
 
 import datetime
 import os

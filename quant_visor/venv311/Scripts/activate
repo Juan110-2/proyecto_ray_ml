@@ -35,7 +35,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="E:\Univalle\13. Séptimo Semestre (Repetición)\Infraestructuras paralelas\Proyecto_repo1\proyecto_ray_ml\quant_visor\venv311"
+VIRTUAL_ENV="C:\Users\braya\Downloads\Proyecto\proyecto_ray_ml\quant_visor\venv311"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

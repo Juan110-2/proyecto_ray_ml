@@ -59,8 +59,6 @@ export default function ChartVisualization({
       });
   
       const parsedData = response.data;
-      console.log("Datos recibidos:", parsedData.slice(0, 3));
-      
       // Detectar ticker y columnas
       const { ticker: detectedTicker } = detectTickerAndColumns(parsedData);
       setTicker(detectedTicker);
@@ -80,7 +78,7 @@ export default function ChartVisualization({
   };
 
   // Función para procesar datos (solo formatear, NO calcular)
-  const processData = (data) => {
+  const processData = (data: any[]) => {
     const { buyHoldColumn } = detectTickerAndColumns(data)
     
     return data.map((item, index) => {
@@ -127,8 +125,6 @@ export default function ChartVisualization({
         });
         
         const rawData = jsonResponse.data
-        console.log("Datos de API recibidos:", rawData)
-        
         // Detectar ticker y columnas
         const { ticker: detectedTicker } = detectTickerAndColumns(rawData);
         setTicker(detectedTicker);
@@ -160,14 +156,8 @@ export default function ChartVisualization({
   const totalDays = formattedData.length
 
   // Debug: Mostrar algunos valores para verificar
-  if (formattedData.length > 0) {
-    console.log("Primeros 3 valores formateados:", formattedData.slice(0, 3))
-    console.log("Último valor Strategy:", finalStrategyReturn)
-    console.log("Último valor Buy&Hold:", finalBuyHoldReturn)
-  }
-
   // Calcular métricas básicas (simplificadas)
-  const calculateMetrics = (data) => {
+  const calculateMetrics = (data: any[]) => {
     if (data.length === 0) return { volatility: "N/A", maxDrawdown: "N/A", sharpeRatio: "N/A" }
 
     // Calcular máximo drawdown simple
@@ -321,7 +311,7 @@ export default function ChartVisualization({
                   <ChartTooltipContent
                     className="bg-slate-900 text-white border-slate-700"
                     formatter={(value, name) => [
-                      `${parseFloat(value).toFixed(2)}%`,
+                      `${parseFloat(String(value)).toFixed(2)}%`,
                       name === "strategyReturn" ? "Strategy Return" : `${ticker} Buy&Hold`,
                     ]}
                     labelFormatter={(label, payload) => {
@@ -441,9 +431,9 @@ export default function ChartVisualization({
           <Button
             onClick={() => {
               const csvContent = [
-                "Date,Strategy Return (%),Buy&Hold Return (%),Strategy Cumulative (%),Buy&Hold Cumulative (%)",
+                "Date,Strategy Cumulative (%),Buy&Hold Cumulative (%)",
                 ...formattedData.map(
-                  (d) => `${d.fullDate},${d.strategyDaily},${d.buyHoldDaily},${d.strategyReturn},${d.buyHoldReturn}`,
+                  (d) => `${d.fullDate},${d.strategyReturn},${d.buyHoldReturn}`,
                 ),
               ].join("\n")
 

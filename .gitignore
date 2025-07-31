@@ -1,10 +1,16 @@
+# Ignorar entornos virtuales
+venv/
+venv311/
+inference_api/venv311/
+quant_visor/venv311/
+
+
 # Dependencies
 node_modules/
 /.pnp
 .pnp.js
 
 # Production builds
-.next/
 out/
 build/
 dist/
@@ -49,7 +55,6 @@ jspm_packages/
 .vercel
 
 # Next.js cache
-.next/
 out/
 
 # Nuxt.js build / generate output
