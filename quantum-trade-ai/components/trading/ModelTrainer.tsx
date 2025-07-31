@@ -63,11 +63,9 @@ export default function ModelTrainer({
           params: TrainData,
         })
       } else {
-        response = await axios.post("http://127.0.0.1:8001/train/yahoofinance", TrainData)
-        response = await axios.post("", TrainData)
+        response = await axios.post("http://localhost:8001/train/yahoofinance", TrainData)
+        console.log(response)
       }
-
-      ("Respuesta entrenamiento", response.data)
       setTrained(true)
       onTrainingComplete(true)
       setLoadingState("¡Entrenamiento completado exitosamente!")

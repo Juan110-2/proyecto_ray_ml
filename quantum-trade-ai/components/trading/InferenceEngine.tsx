@@ -170,43 +170,58 @@ export default function InferenceEngine({
   }, [selectedIndex])
 
   const handleInference = async () => {
-    if (!inferenceConfig.ticker || !inferenceConfig.startDateIn || !inferenceConfig.endDateIn) {
-      alert("Por favor completa todos los campos")
-      return
-    }
-
-    setIsLoading(true)
-    setLoadingState("Haciendo la inferencia...")
-
-    const InferenceData = {
-      ticker: inferenceConfig.ticker,
-      start_date: inferenceConfig.startDateIn,
-      end_date: inferenceConfig.endDateIn,
-      index: selectedIndex,
-    }
-
-    try {
-      (InferenceData)
-      setLoadingState("Procesando datos del mercado...")
-
-      const response = await axios.post("http://127.0.0.1:8002/inference", InferenceData)
-      console.log("Respuesta Inferencia", response.data)
-      console.log("Respuesta Inferencia", response.data.path)
-
-
-      setLoadingState("Generando predicciones...")
-      onInferenceComplete(response.data, response.data.path)
-      setLoadingState("¡Inferencia completada!")
-    } catch (error) {
-      ("Error al hacer la inferencia", error)
-      setLoadingState("Error en la inferencia")
-    } finally {
-      setTimeout(() => {
-        setIsLoading(false)
-        setLoadingState("")
-      }, 2000)
-    }
+  if (!inferenceConfig.ticker || !inferenceConfig.startDateIn || !inferenceConfig.endDateIn) {
+    alert("Por favor completa todos los campos");
+    return;
   }
+
+  setIsLoading(true);
+  setLoadingState("Haciendo la inferencia...");
+
+  const InferenceData = {
+    ticker: inferenceConfig.ticker,
+    start_date: inferenceConfig.startDateIn,
+    end_date: inferenceConfig.endDateIn,
+    index: selectedIndex,
+  };
+
+  console.group("🔍 DEBUG Inference");
+  console.log("Endpoint URL:", "http://127.0.0.1:8002/inference"); 
+  console.log("Payload:", InferenceData);
+
+  try {
+    setLoadingState("Procesando datos del mercado...");
+    const response = await axios.post("http://127.0.0.1:8002/inference", InferenceData);
+
+    console.log("✅ Status code:", response.status);
+    console.log("✅ Response data:", response.data);
+
+    setLoadingState("Generando predicciones...");
+    onInferenceComplete(response.data, response.data.path);
+    setLoadingState("¡Inferencia completada!");
+  } catch (error: any) {
+    console.error("❌ Error de Axios:", error);
+
+    // Si es un error de Axios, suele tener estas propiedades:
+    if (axios.isAxiosError(error)) {
+      console.error("– error.response:", error.response);
+      console.error("– error.response?.status:", error.response?.status);
+      console.error("– error.response?.data:", error.response?.data);
+      console.error("– error.request:", error.request);
+    }
+
+    console.error("– error.message:", error.message);
+    setLoadingState("Error en la inferencia");
+  } finally {
+    console.groupEnd();
+    // Opcionalmente dale un par de segundos al usuario para leer el mensaje
+    setTimeout(() => {
+      setIsLoading(false);
+      setLoadingState("");
+    }, 2000);
+  }
+};
+
 
   const getIndexName = () => {
     const indices: Record<string, string> = {

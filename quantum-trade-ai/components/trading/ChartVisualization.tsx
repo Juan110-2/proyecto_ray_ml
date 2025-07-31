@@ -59,7 +59,7 @@ export default function ChartVisualization({
       });
   
       const parsedData = response.data;
-      ("Datos recibidos:", parsedData.slice(0, 3));
+      console.log("Datos recibidos:", parsedData.slice(0, 3));
       
       // Detectar ticker y columnas
       const { ticker: detectedTicker } = detectTickerAndColumns(parsedData);
@@ -127,7 +127,7 @@ export default function ChartVisualization({
         });
         
         const rawData = jsonResponse.data
-        ("Datos de API recibidos:", rawData)
+        console.log("Datos de API recibidos:", rawData)
         
         // Detectar ticker y columnas
         const { ticker: detectedTicker } = detectTickerAndColumns(rawData);
@@ -161,9 +161,9 @@ export default function ChartVisualization({
 
   // Debug: Mostrar algunos valores para verificar
   if (formattedData.length > 0) {
-    ("Primeros 3 valores formateados:", formattedData.slice(0, 3))
-    ("Último valor Strategy:", finalStrategyReturn)
-    ("Último valor Buy&Hold:", finalBuyHoldReturn)
+    console.log("Primeros 3 valores formateados:", formattedData.slice(0, 3))
+    console.log("Último valor Strategy:", finalStrategyReturn)
+    console.log("Último valor Buy&Hold:", finalBuyHoldReturn)
   }
 
   // Calcular métricas básicas (simplificadas)
