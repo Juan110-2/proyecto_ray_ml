@@ -84,6 +84,12 @@ inference_api/.venv/
 inference_api/.venv311/
 
 
+quant_visor/venv/
+quant_visor/env/
+quant_visor/.venv/
+quant_visor/.venv311/
+
+
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -138,7 +144,6 @@ Thumbs.db
 
 # Trading/Financial data (potentially sensitive)
 *.csv
-*.json
 data/
 historical_data/
 market_data/
